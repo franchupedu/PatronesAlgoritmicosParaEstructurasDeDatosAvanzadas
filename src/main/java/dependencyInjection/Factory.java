@@ -5,7 +5,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.lang.Class;
 
 public class Factory {
@@ -15,9 +17,11 @@ public class Factory {
 		//printClassMetadata(objectClass);
 		//printFieldsMetadata(objectClass);
 		//Creo el objecto de la clase objectClass
+		System.out.println("Instanciando '" + objectClass.getName() + "'");
 		T object = createObject(objectClass);
-		//Inyectar dependencias 
+		System.out.println("-Inyectando dependencias");
 		object = inyectDependencies(object);
+		System.out.println("'" + objectClass.getName() + "' instanciado con exito!");
 		return object;
 	}
 	
@@ -27,17 +31,21 @@ public class Factory {
 
         for (Field campo : campos) {
             //Tiene @Injected?
-        	Injected injected = campo.getAnnotation(Injected.class);       	
+        	Injected injected = campo.getAnnotation(Injected.class);   
             if ( injected != null ) {
-            	Class<?> fieldClass = campo.getType(); //Clase del field    
+            	Class<?> fieldClass = getFieldClass(campo); //Clase del field   
+            	  
             	//La clase tiene @Component?
             	if(isComponent(fieldClass)) {
-            		// TODO aca falla cuando es lista porque busca @Component en la clase List en vez de
-            		//en la clase de los items. Hay que ver como agarrar la clase de los elementos de un List
-            		
-            		if ( injected.count() > 1 && Collection.class.isAssignableFrom(fieldClass) ) {//Si tiene count > 1 y es una coleccion
-            			System.out.println(injected.count());
-					} else {
+            		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
+            		if ( injected.count() > 1 && fieldIsList(campo) ) {//Si tiene count > 1 y es una coleccion
+            			List<Object> listValue = new ArrayList<Object>();
+            			for(int i = 0; i < injected.count(); i++) {
+            				listValue.add(getObject(fieldClass));
+            			}
+            			setField(parentObject, campo, listValue);
+					} 
+            		else {
 	            		Object fieldValue = getObject(fieldClass);
 	            		setField(parentObject, campo, fieldValue);
 					}
@@ -49,12 +57,38 @@ public class Factory {
 		return parentObject;
 	}
 	
-	//Prueba para encontrar  la clase de los elemnetos de un List 
+	public static Object getFieldValueFromObject(Object object, Field campo ) {
+		campo.setAccessible(true);//Para setear campos con private
+		try {
+			return campo.get(object);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		campo.setAccessible(false);
+		return null;
+	}
+	
+	public static Class<?> getFieldClass(Field campo){
+    	Class<?> fieldClass = null; 
+    	if(fieldIsList(campo)) {
+    		fieldClass = getListFieldParametizedClass(campo);
+    	}
+    	else {
+    		fieldClass = campo.getType();
+    	}
+    	return fieldClass;
+	}
+	
+	//Devuelve la clase parametrizada en un List 
 	public static Class<?> getListFieldParametizedClass(Field campo) {
         Type type = campo.getGenericType();
         if (type instanceof ParameterizedType) {
             ParameterizedType paramType = (ParameterizedType) type;
-            Class<?> tClass = (Class<?>) paramType.getActualTypeArguments()[0];    
+            Class<?> tClass = (Class<?>) paramType.getActualTypeArguments()[0];
             return tClass;      
         } else {
             //System.err.println("not parameterized");
@@ -148,5 +182,9 @@ public class Factory {
             	System.out.println("Campo '" + fieldName + "' no es inyectable :(");
             }
         }		
-	}	
+	}
+	
+	public static boolean fieldIsList(Field campo) {
+		return Collection.class.isAssignableFrom(campo.getType());
+	}
 }
