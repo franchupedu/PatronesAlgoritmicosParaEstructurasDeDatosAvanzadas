@@ -38,16 +38,19 @@ public class Factory {
             	//La clase tiene @Component?
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
+            		//TODO Arrays - Interfaces - Singleton
+            		//LISTS
             		if ( injected.count() > 1 && fieldIsList(campo) ) {//Si tiene count > 1 y es una coleccion
             			List<Object> listValue = new ArrayList<Object>();
-            			for(int i = 0; i < injected.count(); i++) {
+            			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
             				listValue.add(getObject(fieldClass));
             			}
-            			setField(parentObject, campo, listValue);
+            			setField(parentObject, campo, listValue);//Le asigno el valor de la lista al campo del parentObject
 					} 
+            		//OTROS CASOS
             		else {
 	            		Object fieldValue = getObject(fieldClass);
-	            		setField(parentObject, campo, fieldValue);
+	            		setField(parentObject, campo, fieldValue);//Le asigno al field del parentObject el fieldValue
 					}
             			      
             	}
@@ -57,21 +60,7 @@ public class Factory {
 		return parentObject;
 	}
 	
-	public static Object getFieldValueFromObject(Object object, Field campo ) {
-		campo.setAccessible(true);//Para setear campos con private
-		try {
-			return campo.get(object);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		campo.setAccessible(false);
-		return null;
-	}
-	
+	//Devuelve la clase de un campo. Si es coleccion, devuelve la clase parametrizada
 	public static Class<?> getFieldClass(Field campo){
     	Class<?> fieldClass = null; 
     	if(fieldIsList(campo)) {
