@@ -1,5 +1,7 @@
 package dependencyInjection;
 
+import java.util.List;
+
 @Component
 public class Auto {
 	 @Injected
@@ -7,6 +9,9 @@ public class Auto {
 
 	 @Injected(count=4)
 	 private Rueda[] ruedas;
+
+	 @Injected(count=4,implementation=List.class)
+	 private List<Asiento> asientos;
 	 
 	 public String queseyo = "jijr";
 

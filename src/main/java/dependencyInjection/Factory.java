@@ -1,5 +1,6 @@
 package dependencyInjection;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -14,39 +15,45 @@ public class Factory {
 	
 	//T = tipo generico
 	public static <T> T getObject(Class<T> objectClass) {
-		//printClassMetadata(objectClass);
-		//printFieldsMetadata(objectClass);
-		//Creo el objecto de la clase objectClass
-		System.out.println("Instanciando '" + objectClass.getName() + "'");
-		T object = createObject(objectClass);
+		System.out.println("Instanciando un objeto de Type '" + objectClass.getSimpleName() + "'");
+		T object = createObject(objectClass);//Guardo una instancia de objectClass
 		System.out.println("-Inyectando dependencias");
-		object = inyectDependencies(object);
-		System.out.println("'" + objectClass.getName() + "' instanciado con exito!");
+		object = inyectDependencies(object);//Inyectamos dependencias a la instancia
+		System.out.println("---Objeto '" + objectClass.getSimpleName() + "' instanciado con exito!");
 		return object;
 	}
 	
-	public static <T> T inyectDependencies(T parentObject){
+	private static <T> T inyectDependencies(T parentObject){
 		//Lista de propiedades
 		Field[] campos = parentObject.getClass().getDeclaredFields();
 
         for (Field campo : campos) {
             //Tiene @Injected?
-        	Injected injected = campo.getAnnotation(Injected.class);   
+        	Injected injected = campo.getAnnotation(Injected.class);  
+        	
             if ( injected != null ) {
             	Class<?> fieldClass = getFieldClass(campo); //Clase del field   
-            	  
             	//La clase tiene @Component?
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
-            		//TODO Arrays - Interfaces - Singleton
+            		//TODO Interfaces - Singleton
             		//LISTS
-            		if ( injected.count() > 1 && fieldIsList(campo) ) {//Si tiene count > 1 y es una coleccion
-            			List<Object> listValue = new ArrayList<Object>();
+            		if ( injected.count() >= 1 && fieldIsList(campo) ) {//Si tiene count >= 1 y es una coleccion
+            			System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
+            			List<Object> fieldValue = new ArrayList<Object>();
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
-            				listValue.add(getObject(fieldClass));
+            				fieldValue.add(getObject(fieldClass));
             			}
-            			setField(parentObject, campo, listValue);//Le asigno el valor de la lista al campo del parentObject
-					} 
+            			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject
+					}
+            		else if(campo.getType().isArray()) {
+            			System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");           			
+            			Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
+            			for(int i = 0; i < injected.count(); i++) {
+            				fieldValue[i] = getObject(fieldClass);
+            			}           			
+            			setField(parentObject, campo, fieldValue);
+            		}
             		//OTROS CASOS
             		else {
 	            		Object fieldValue = getObject(fieldClass);
@@ -62,10 +69,13 @@ public class Factory {
 	
 	//Devuelve la clase de un campo. Si es coleccion, devuelve la clase parametrizada
 	public static Class<?> getFieldClass(Field campo){
-    	Class<?> fieldClass = null; 
+    	Class<?> fieldClass = null;
     	if(fieldIsList(campo)) {
     		fieldClass = getListFieldParametizedClass(campo);
     	}
+    	else if (campo.getType().isArray()) {
+    		fieldClass = campo.getType().getComponentType();
+		}
     	else {
     		fieldClass = campo.getType();
     	}
