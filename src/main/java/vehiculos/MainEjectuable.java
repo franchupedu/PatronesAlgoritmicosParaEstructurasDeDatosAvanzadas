@@ -1,4 +1,6 @@
-package dependencyInjection;
+package vehiculos;
+
+import dependencyInjection.Factory;
 
 public class MainEjectuable {
 	

@@ -1,12 +1,18 @@
-package dependencyInjection;
+package vehiculos;
 
 import java.util.List;
 
-@Component
-public class Auto {
-	 @Injected
-	 private Motor motor;
+import dependencyInjection.Component;
+import dependencyInjection.Injected;
 
+@Component
+public class Auto implements Vehiculo{
+	 @Injected(implementation=Moto.class)
+	 private Vehiculo pruebaDeInterfaz;
+	
+	 @Injected(singleton=true)
+	 private Motor motor;
+	 
 	 @Injected(count=4)
 	 private Rueda[] ruedas;
 

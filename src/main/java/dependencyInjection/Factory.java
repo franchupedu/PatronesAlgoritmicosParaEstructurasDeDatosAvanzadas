@@ -9,7 +9,13 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.lang.Class;
+
+import org.reflections.Reflections;
+
+import vehiculos.Vehiculo;
+
 
 public class Factory {
 	
@@ -37,8 +43,31 @@ public class Factory {
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
             		//TODO Interfaces - Singleton
-            		//LISTS
-            		if ( injected.count() >= 1 && fieldIsList(campo) ) {//Si tiene count >= 1 y es una coleccion
+            		
+            		//INTERFACES
+            		//TODO el @Component se esta comprobando en la interface, habria que hacerlo en la implementacion
+            		//TODO error recursivo si la clase a implementar es la misma que la del parentObject (no hay condicion de corte)
+            		if( fieldClass.isInterface() && injected.implementation() != Class.class ) {
+            			Reflections reflections = new Reflections(fieldClass.getPackage().getName());
+            			Set<Class<? extends Vehiculo>> implementations = reflections.getSubTypesOf(Vehiculo.class);//Todas las clases que implementan la interface
+            			System.out.println("---Implementaciones de la interface '" + fieldClass.getSimpleName() + "': " + implementations );
+            			
+            			Class<?> implementationClass = null;//Implementacion a usar. Clase que se va a instanciar en el campo
+            			//TODO tirar warning si se manda implementation que no existe (exception si existe mas de una)
+            			if(implementations.size() == 1) 
+            				implementationClass = implementations.iterator().next();//Primer item en el set
+            			else if( implementations.size() > 1 && injected.implementation() != Class.class ) {
+            				if(implementations.contains(injected.implementation())) 
+            					implementationClass = injected.implementation();
+            			}
+            			
+            			System.out.println("---La clase a implementar es '" + implementationClass.getSimpleName() + "'");
+            			Object fieldValue = getObject(implementationClass);
+	            		setField(parentObject, campo, fieldValue);
+            		}
+            		
+            		//LISTS	
+            		else if ( fieldIsList(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
             			System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
             			List<Object> fieldValue = new ArrayList<Object>();
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
@@ -46,6 +75,8 @@ public class Factory {
             			}
             			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject
 					}
+            		
+            		//ARRAY
             		else if(campo.getType().isArray()) {
             			System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");           			
             			Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
@@ -54,6 +85,7 @@ public class Factory {
             			}           			
             			setField(parentObject, campo, fieldValue);
             		}
+            		
             		//OTROS CASOS
             		else {
 	            		Object fieldValue = getObject(fieldClass);

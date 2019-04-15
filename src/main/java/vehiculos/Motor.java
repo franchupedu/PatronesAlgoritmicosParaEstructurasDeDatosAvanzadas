@@ -1,6 +1,9 @@
-package dependencyInjection;
+package vehiculos;
 
 import java.util.List;
+
+import dependencyInjection.Component;
+import dependencyInjection.Injected;
 
 @Component
 public class Motor {
