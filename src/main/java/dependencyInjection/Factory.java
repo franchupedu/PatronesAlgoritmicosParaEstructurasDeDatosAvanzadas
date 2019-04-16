@@ -54,8 +54,10 @@ public class Factory {
             			
             			Class<?> implementationClass = null;//Implementacion a usar. Clase que se va a instanciar en el campo
             			//TODO tirar warning si se manda implementation que no existe (exception si existe mas de una)
-            			if(implementations.size() == 1) 
+            			//Si existe solo una implementacion usamos esa
+            			if(implementations.size() == 1)
             				implementationClass = implementations.iterator().next();//Primer item en el set
+            			//Si existen varias implementaciones, y se paso alguna clase por injected, usamos esa
             			else if( implementations.size() > 1 && injected.implementation() != Class.class ) {
             				if(implementations.contains(injected.implementation())) 
             					implementationClass = injected.implementation();
