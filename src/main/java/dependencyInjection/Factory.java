@@ -14,12 +14,9 @@ import java.lang.Class;
 
 import org.reflections.Reflections;
 
-import vehiculos.Vehiculo;
-
 
 public class Factory {
 	
-	//T = tipo generico
 	public static <T> T getObject(Class<T> objectClass) {
 		System.out.println("Instanciando un objeto de Type '" + objectClass.getSimpleName() + "'");
 		T object = createObject(objectClass);//Guardo una instancia de objectClass
@@ -37,39 +34,21 @@ public class Factory {
             //Tiene @Injected?
         	Injected injected = campo.getAnnotation(Injected.class);  
         	
-            if ( injected != null ) {
-            	Class<?> fieldClass = getFieldClass(campo); //Clase del field   
+            if (injected != null) {
+            	Class<?> fieldClass = getFieldClass(campo); //Clase del campo
+
+        		//Error de recursividad si una clase se intenta inyectar a si misma
+            	if( fieldClass == parentObject.getClass() ) {
+            		throw new IllegalArgumentException("Una clase no puede inyectarse a si misma");
+            	}
+            	
+            	//TODO Singleton - Recursividad en Colecciones
             	//La clase tiene @Component?
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
-            		//TODO Interfaces - Singleton
-            		
-            		//INTERFACES
-            		//TODO el @Component se esta comprobando en la interface, habria que hacerlo en la implementacion
-            		//TODO error recursivo si la clase a implementar es la misma que la del parentObject (no hay condicion de corte)
-            		if( fieldClass.isInterface() && injected.implementation() != Class.class ) {
-            			Reflections reflections = new Reflections(fieldClass.getPackage().getName());
-            			Set<Class<? extends Vehiculo>> implementations = reflections.getSubTypesOf(Vehiculo.class);//Todas las clases que implementan la interface
-            			System.out.println("---Implementaciones de la interface '" + fieldClass.getSimpleName() + "': " + implementations );
-            			
-            			Class<?> implementationClass = null;//Implementacion a usar. Clase que se va a instanciar en el campo
-            			//TODO tirar warning si se manda implementation que no existe (exception si existe mas de una)
-            			//Si existe solo una implementacion usamos esa
-            			if(implementations.size() == 1)
-            				implementationClass = implementations.iterator().next();//Primer item en el set
-            			//Si existen varias implementaciones, y se paso alguna clase por injected, usamos esa
-            			else if( implementations.size() > 1 && injected.implementation() != Class.class ) {
-            				if(implementations.contains(injected.implementation())) 
-            					implementationClass = injected.implementation();
-            			}
-            			
-            			System.out.println("---La clase a implementar es '" + implementationClass.getSimpleName() + "'");
-            			Object fieldValue = getObject(implementationClass);
-	            		setField(parentObject, campo, fieldValue);
-            		}
-            		
+            		        
             		//LISTS	
-            		else if ( fieldIsList(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
+            		if ( fieldIsList(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
             			System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
             			List<Object> fieldValue = new ArrayList<Object>();
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
@@ -100,20 +79,45 @@ public class Factory {
         
 		return parentObject;
 	}
+
+	//Devuelve la clase a implementar en un campo con interface
+	public static Class<?> getInterfaceImplementationClass(Class<?> interfaceClass, Injected injected){
+		Reflections reflections = new Reflections(interfaceClass.getPackage().getName());
+		Set<?> implementations = reflections.getSubTypesOf(interfaceClass);//Todas las clases que implementan la interface
+		//System.out.println("---Implementaciones de la interface '" + interfaceClass.getSimpleName() + "': " + implementations );
+		
+		Class<?> implementationClass = null;//Implementacion a usar. Clase que se va a instanciar en el campo
+		//TODO tirar warning si se manda implementation que no existe (exception si existe mas de una)
+		//Si existe solo una implementacion usamos esa
+		if(implementations.size() == 1)
+			implementationClass = (Class<?>) implementations.iterator().next();//Primer item en el set
+		//Si existen varias implementaciones, y se paso alguna clase por injected, usamos esa
+		else if( implementations.size() > 1 && injected.implementation() != Class.class ) {
+			if(implementations.contains(injected.implementation())) 
+				implementationClass = injected.implementation();
+		}		
+		//System.out.println("---La clase a implementar es '" + implementationClass.getSimpleName() + "'");
+		
+    	return implementationClass;
+	}
 	
 	//Devuelve la clase de un campo. Si es coleccion, devuelve la clase parametrizada
 	public static Class<?> getFieldClass(Field campo){
-    	Class<?> fieldClass = null;
+		Class<?> fieldClass = campo.getType();
+    	Class<?> finalClass = null;
     	if(fieldIsList(campo)) {
-    		fieldClass = getListFieldParametizedClass(campo);
+    		finalClass = getListFieldParametizedClass(campo);
     	}
-    	else if (campo.getType().isArray()) {
-    		fieldClass = campo.getType().getComponentType();
+    	else if (fieldClass.isArray()) {
+    		finalClass = fieldClass.getComponentType();
 		}
-    	else {
-    		fieldClass = campo.getType();
+    	else if(fieldClass.isInterface() ) {
+    		finalClass = getInterfaceImplementationClass(fieldClass, campo.getAnnotation(Injected.class));
     	}
-    	return fieldClass;
+    	else {
+    		finalClass = fieldClass;
+    	}
+    	return finalClass;
 	}
 	
 	//Devuelve la clase parametrizada en un List 
