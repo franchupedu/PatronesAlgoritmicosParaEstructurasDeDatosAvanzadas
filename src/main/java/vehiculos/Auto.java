@@ -67,4 +67,12 @@ public class Auto implements Vehiculo{
 	public void setAsientos(List<Asiento> asientos) {
 		this.asientos = asientos;
 	}
+
+	public Vehiculo getPruebaDeInterfaz() {
+		return pruebaDeInterfaz;
+	}
+
+	public void setPruebaDeInterfaz(Vehiculo pruebaDeInterfaz) {
+		this.pruebaDeInterfaz = pruebaDeInterfaz;
+	}
 }

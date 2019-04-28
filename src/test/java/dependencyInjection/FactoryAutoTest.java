@@ -1,9 +1,17 @@
 package dependencyInjection;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import vehiculos.Auto;
+import vehiculos.Moto;
+import vehiculos.Rueda;
+import vehiculos.Vehiculo;
 import dependencyInjection.Factory;
 
 public class FactoryAutoTest {
@@ -16,49 +24,81 @@ public class FactoryAutoTest {
 	}
 	
 	@Test
-	public void inyectorNoDevuelveNull() {
-		assert( auto != null);
+	public void inyectorNoDevuelveNullConAuto() {
+		assertNotNull(auto);
 	}
 	
 	@Test
 	public void autoTieneMotor() {
-		assert( auto.getMotor() != null);
+		assertNotNull(auto.getMotor());
 	}
 	
 	@Test
 	public void autoTieneRuedas() {
-		assert( auto.getRuedas() != null);
+		assertNotNull(auto.getRuedas());
 	}
 	
 	@Test
 	public void autoNoTieneAlgoQueNoInstancio() {
-		assert( auto.getTieneQueSerNulo() == null);
+		assertNull(auto.getTieneQueSerNulo());
 	}
 	
 	@Test
 	public void autoTieneAsientos() {
-		assert( auto.getAsientos() != null);
+		assertNotNull(auto.getAsientos());
 	}
 	
 	@Test
 	public void autoTienePropiedadInstanciadaPorClase() {
-		assert( auto.getQueseyo() != null);
+		assertNotNull(auto.getQueseyo());
 	}
-	/* ****TODO****
+
 	@Test
 	public void motorEsSingleton() {
 		Auto auto2 = Factory.getObject(Auto.class);
 		assert ( auto == auto2 );
 	}
-	*/
 	
 	@Test
 	public void autoTieneArrayDeCuatroRuedas() {
-		assert( auto.getRuedas().length == 4);
+		assertEquals(4, auto.getRuedas().length);
 	}
 	
 	@Test
 	public void autoTieneListaDe5Asientos() {
-		assert( auto.getAsientos().size() == 5);
+		assertEquals(5, auto.getAsientos().size());
+	}
+	
+	@Test
+	public void elMotorDelAutoTiene25Tuercas() {
+		assertEquals(25, auto.getMotor().getTuercas().size());
+	}
+	
+	@Test
+	public void queseyoSeInstanciaConjijr(){
+		assertEquals("jijr", auto.getQueseyo());
+	}
+	
+	@Test
+	public void laRuedaNoInstanciaTuercas(){
+		Rueda[] ruedas = auto.getRuedas();
+		for (int i = 0; i < ruedas.length; i++) {
+			assertNull(ruedas[i].getTuercas());
+		}
+	}
+	
+	@Test
+	public void pruebaDeInterfazNoEstaVacia(){
+		assertNotNull(auto.getPruebaDeInterfaz());
+	}
+	
+	@Test
+	public void pruebaDeInterfazEsUnaInstanciaDeMoto(){
+		assertTrue(auto.getPruebaDeInterfaz() instanceof Moto );
+	}
+	
+	@Test
+	public void pruebaDeInterfazImplementaVehiculo(){
+		assertEquals(Vehiculo.class, auto.getPruebaDeInterfaz().getClass().getGenericInterfaces()[0]);
 	}
 }
