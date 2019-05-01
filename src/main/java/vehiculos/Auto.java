@@ -7,8 +7,8 @@ import dependencyInjection.Injected;
 
 @Component
 public class Auto implements Vehiculo{
-	 @Injected(implementation=Moto.class)
-	 private Vehiculo pruebaDeInterfaz;
+	 //@Injected(implementation=Moto.class)
+	 //private Vehiculo pruebaDeInterfaz;
 	
 	 @Injected(singleton=true)
 	 private Motor motor;
@@ -24,8 +24,12 @@ public class Auto implements Vehiculo{
 	 private Boolean tieneQueSerNulo;
 	 
 	 public void printProperties() {
-		 System.out.println(getMotor());
-		 getMotor().printProperties();
+		 System.out.println(this.getMotor());
+		 this.getMotor().printProperties();
+		 System.out.println(this.getRuedas());
+		 System.out.println(this.getAsientos());
+		 System.out.println(this.getQueseyo());
+		 System.out.println(this.getTieneQueSerNulo());
 	 }
 
 	public Motor getMotor() {

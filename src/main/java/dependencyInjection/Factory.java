@@ -6,16 +6,19 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Set;
+import java.util.HashSet;
 import java.lang.Class;
 
 import org.reflections.Reflections;
 
 
 public class Factory {
+	
+	private static final Singleton singleton = new Singleton();
 	
 	public static <T> T getObject(Class<T> objectClass) {
 		System.out.println("Instanciando un objeto de Type '" + objectClass.getSimpleName() + "'");
@@ -27,6 +30,7 @@ public class Factory {
 	}
 	
 	private static <T> T inyectDependencies(T parentObject){
+		
 		//Lista de propiedades
 		Field[] campos = parentObject.getClass().getDeclaredFields();
 
@@ -36,7 +40,7 @@ public class Factory {
         	
             if (injected != null) {
             	Class<?> fieldClass = getFieldClass(campo); //Clase del campo
-
+            	
         		//Error de recursividad si una clase se intenta inyectar a si misma
             	if( fieldClass == parentObject.getClass() ) {
             		throw new IllegalArgumentException("Una clase no puede inyectarse a si misma");
@@ -46,33 +50,54 @@ public class Factory {
             	//La clase tiene @Component?
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
-            		        
-            		//LISTS	
-            		if ( fieldIsList(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
-            			System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
-            			List<Object> fieldValue = new ArrayList<Object>();
-            			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
-            				fieldValue.add(getObject(fieldClass));
-            			}
-            			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject
-					}
             		
-            		//ARRAY
-            		else if(campo.getType().isArray()) {
-            			System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");           			
-            			Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
-            			for(int i = 0; i < injected.count(); i++) {
-            				fieldValue[i] = getObject(fieldClass);
-            			}           			
+            		if ( injected.singleton() ) {
+            			System.out.println("--El campo'" + campo.getName() + "' es una instancia singleton de tipo '" + fieldClass.getSimpleName() + "'");
+            			Object fieldValue = getObject(fieldClass);
+            			if (this.singleton.getSingletonInstances().any(instance -> fieldValue instanceof instance.getClass()))
+            				fieldValue = this.singleton.getSingletonInstances().find(instance -> fieldValue instanceof instance.getClass());
+            			else
+            				this.singleton.getSingletonInstances().add(fieldValue);
             			setField(parentObject, campo, fieldValue);
             		}
-            		
-            		//OTROS CASOS
             		else {
-	            		Object fieldValue = getObject(fieldClass);
-	            		setField(parentObject, campo, fieldValue);//Le asigno al field del parentObject el fieldValue
-					}
-            			      
+            			//LISTS	
+            			if ( fieldIsList(campo) ) {//Si tiene count >= 1 y es una coleccion
+            				System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
+            				List<Object> fieldValue = new LinkedList<Object>();
+            				for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
+            					fieldValue.add(getObject(fieldClass));
+            				}
+            				setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject
+            			}
+            			
+            			//SETS
+            			else if ( fieldIsSet(campo) ) {
+            				System.out.println("--El campo '" + campo.getName() + "' es un Set. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
+            				Set<Object> fieldValue = new HashSet<Object>();
+            				for(int i = 0; i < injected.count(); i++) {
+            					fieldValue.add(getObject(fieldClass));
+            				}
+            				setField(parentObject, campo, fieldValue);
+            			}
+            			
+            			//ARRAY
+            			else if(campo.getType().isArray()) {
+            				System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
+            				Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
+            				for(int i = 0; i < injected.count(); i++) {
+            					fieldValue[i] = getObject(fieldClass);
+            				}
+            				setField(parentObject, campo, fieldValue);
+            			}
+            			
+            			//OTROS CASOS
+            			else {
+            				Object fieldValue = getObject(fieldClass);
+            				setField(parentObject, campo, fieldValue);//Le asigno al field del parentObject el fieldValue
+            			}
+            		}
+            		
             	}
             }
         }
@@ -93,7 +118,7 @@ public class Factory {
 			implementationClass = (Class<?>) implementations.iterator().next();//Primer item en el set
 		//Si existen varias implementaciones, y se paso alguna clase por injected, usamos esa
 		else if( implementations.size() > 1 && injected.implementation() != Class.class ) {
-			if(implementations.contains(injected.implementation())) 
+			if(implementations.contains(injected.implementation()))
 				implementationClass = injected.implementation();
 		}		
 		//System.out.println("---La clase a implementar es '" + implementationClass.getSimpleName() + "'");
@@ -105,8 +130,8 @@ public class Factory {
 	public static Class<?> getFieldClass(Field campo){
 		Class<?> fieldClass = campo.getType();
     	Class<?> finalClass = null;
-    	if(fieldIsList(campo)) {
-    		finalClass = getListFieldParametizedClass(campo);
+    	if(fieldIsCollection(campo)) {
+    		finalClass = getCollectionFieldParameterizedClass(campo);
     	}
     	else if (fieldClass.isArray()) {
     		finalClass = fieldClass.getComponentType();
@@ -121,12 +146,12 @@ public class Factory {
 	}
 	
 	//Devuelve la clase parametrizada en un List 
-	public static Class<?> getListFieldParametizedClass(Field campo) {
+	public static Class<?> getCollectionFieldParameterizedClass(Field campo) {
         Type type = campo.getGenericType();
         if (type instanceof ParameterizedType) {
             ParameterizedType paramType = (ParameterizedType) type;
             Class<?> tClass = (Class<?>) paramType.getActualTypeArguments()[0];
-            return tClass;      
+            return tClass;
         } else {
             //System.err.println("not parameterized");
         }       
@@ -221,7 +246,21 @@ public class Factory {
         }		
 	}
 	
-	public static boolean fieldIsList(Field campo) {
+	public static boolean fieldIsCollection(Field campo) {
 		return Collection.class.isAssignableFrom(campo.getType());
 	}
+	
+	public static boolean fieldIsList(Field campo) {
+		return List.class.isAssignableFrom(campo.getType());
+	}
+	
+	public static boolean fieldIsSet(Field campo) {
+		return Set.class.isAssignableFrom(campo.getType());
+	}
+	
+	/*public static List<Object> newInstanceOf(Field field) {
+		Class<?> object = field.getType();
+		List<Object> instance = object;
+		return instance;
+	}*/
 }
