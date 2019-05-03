@@ -16,7 +16,7 @@ import java.lang.Class;
 import org.reflections.Reflections;
 
 
-public class Factory {
+public class Factory2 {
 	
 	public static <T> T getObject(Class<T> objectClass) {
 		System.out.println("Instanciando un objeto de Type '" + objectClass.getSimpleName() + "'");
@@ -62,8 +62,7 @@ public class Factory {
             			//LISTS	
             			if ( fieldIsList(campos[i]) ) {//Si tiene count >= 1 y es una coleccion
             				System.out.println("--El campo '" + campos[i].getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
-            				List<Object> auxiliary = new LinkedList<Object>();
-            				List<Object> fieldValue = (List<Object>) auxiliary;
+            				List<Object> fieldValue = new LinkedList<Object>();
             				for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
             					fieldValue.add(getObject(fieldClass));
             				}
@@ -73,8 +72,7 @@ public class Factory {
             			//SETS
             			else if ( fieldIsSet(campos[i]) ) {
             				System.out.println("--El campo '" + campos[i].getName() + "' es un Set. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
-            				Set<Object> auxiliary = new HashSet<Object>();
-            				Set<Object> fieldValue = (Set<Object>) auxiliary;
+            				Set<Object> fieldValue = new HashSet<Object>();
             				for(int i = 0; i < injected.count(); i++) {
             					fieldValue.add(getObject(fieldClass));
             				}
@@ -101,8 +99,8 @@ public class Factory {
             	}
             }
         }
-        	
-		return parentObject;
+        
+        return parentObject;
 	}
 
 	//Devuelve la clase a implementar en un campo con interface
@@ -258,4 +256,9 @@ public class Factory {
 		return Set.class.isAssignableFrom(campo.getType());
 	}
 	
+	/*public static List<Object> newInstanceOf(Field field) {
+		Class<?> object = field.getType();
+		List<Object> instance = object;
+		return instance;
+	}*/
 }
