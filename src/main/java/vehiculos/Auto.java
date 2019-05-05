@@ -26,6 +26,10 @@ public class Auto implements Vehiculo{
 	 public void printProperties() {
 		 System.out.println(getMotor());
 		 getMotor().printProperties();
+		 System.out.println(getRuedas());
+		 System.out.println(getTieneQueSerNulo());
+		 System.out.println(getQueseyo());
+		 System.out.println(getAsientos());
 	 }
 
 	public Motor getMotor() {
