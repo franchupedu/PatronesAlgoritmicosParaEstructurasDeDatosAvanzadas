@@ -44,14 +44,13 @@ public class FactoryAutoTest {
 	public void autoTienePropiedadInstanciadaPorClase() {
 		assert( auto.getQueseyo() != null);
 	}
-	/* ****TODO****
+
 	@Test
 	public void motorEsSingleton() {
 		Auto auto2 = Factory.getObject(Auto.class);
-		assert ( auto == auto2 );
+		assert( auto.getMotor() == auto2.getMotor() );
 	}
-	*/
-	
+
 	@Test
 	public void autoTieneArrayDeCuatroRuedas() {
 		assert( auto.getRuedas().length == 4);

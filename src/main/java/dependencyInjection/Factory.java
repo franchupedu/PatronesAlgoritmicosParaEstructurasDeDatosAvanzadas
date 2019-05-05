@@ -42,17 +42,16 @@ public class Factory {
             		throw new IllegalArgumentException("Una clase no puede inyectarse a si misma");
             	}
             	
-            	//TODO Singleton - Recursividad en Colecciones
             	//La clase tiene @Component?
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
-            		        
+            		
             		//LISTS	
             		if ( fieldIsList(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
             			System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
             			List<Object> fieldValue = new ArrayList<Object>();
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
-            				fieldValue.add(getObject(fieldClass));
+            				fieldValue.add(getObjectIfSingleton(fieldClass, campo));
             			}
             			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject
 					}
@@ -62,14 +61,14 @@ public class Factory {
             			System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");           			
             			Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
             			for(int i = 0; i < injected.count(); i++) {
-            				fieldValue[i] = getObject(fieldClass);
+            				fieldValue[i] = getObjectIfSingleton(fieldClass, campo);
             			}           			
             			setField(parentObject, campo, fieldValue);
             		}
             		
             		//OTROS CASOS
             		else {
-	            		Object fieldValue = getObject(fieldClass);
+	            		Object fieldValue = getObjectIfSingleton(fieldClass, campo);
 	            		setField(parentObject, campo, fieldValue);//Le asigno al field del parentObject el fieldValue
 					}
             			      
@@ -79,7 +78,23 @@ public class Factory {
         
 		return parentObject;
 	}
-
+	
+	public static <T> T getObjectIfSingleton(Class<T> fieldClass, Field campo) {
+		Injected injected = campo.getAnnotation(Injected.class);
+		T object = null;
+		if ( injected.singleton() ) {
+			object = (T) Singleton.getObjectOfClass(fieldClass);
+			if ( object == null ) {
+				object = getObject(fieldClass);
+				Singleton.getSingletonInstances().add(object);
+			}
+		}
+		else {
+			object = getObject(fieldClass);
+		}
+		return object;
+	}
+	
 	//Devuelve la clase a implementar en un campo con interface
 	public static Class<?> getInterfaceImplementationClass(Class<?> interfaceClass, Injected injected){
 		Reflections reflections = new Reflections(interfaceClass.getPackage().getName());

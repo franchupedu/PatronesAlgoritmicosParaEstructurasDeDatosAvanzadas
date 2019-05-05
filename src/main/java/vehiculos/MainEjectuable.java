@@ -10,7 +10,7 @@ public class MainEjectuable {
         lista.add(new Libro("titulo1", "pedro"));
         procesar(lista);*/
 	   
-	   Auto a = Factory.getObject(Auto.class);
-	   //a.printProperties();	   
+	   Auto auto = Factory.getObject(Auto.class);
+	   auto.printProperties();	   
     }
 }
