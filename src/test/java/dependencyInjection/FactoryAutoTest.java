@@ -50,6 +50,17 @@ public class FactoryAutoTest {
 		Auto auto2 = Factory.getObject(Auto.class);
 		assert( auto.getMotor() == auto2.getMotor() );
 	}
+	
+	@Test
+	public void autoNoEsSingleton() {
+		Auto auto2 = Factory.getObject(Auto.class);
+		assert( auto != auto2 );
+	}
+	@Test
+	public void autoNoEsSingleton2() {
+		Auto auto2 = Factory.getObject(Auto.class);
+		assert( auto == auto2 );
+	}
 
 	@Test
 	public void autoTieneArrayDeCuatroRuedas() {
