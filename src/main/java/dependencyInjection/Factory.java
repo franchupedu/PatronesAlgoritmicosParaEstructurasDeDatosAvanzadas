@@ -52,8 +52,9 @@ public class Factory {
             			Object fieldValue = getObject(fieldClass);
             			if (getSingletonInstances().any(instance -> fieldValue instanceof instance.getClass()))
             				fieldValue = getSingletonInstances().find(instance -> fieldValue instanceof instance.getClass());
-            			else
-            				getSingletonInstances().add(fieldValue);
+            			else {
+            				getSingletonInstances().add(fieldValue);		
+            			}
             			setField(parentObject, campos[i], fieldValue);
             		}
             		else {
