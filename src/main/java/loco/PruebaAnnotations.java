@@ -4,9 +4,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import dependencyInjection.Factory;
-import vehiculos.Auto;
-
 public class PruebaAnnotations {
 	
    public static void main(String[] args) { 
