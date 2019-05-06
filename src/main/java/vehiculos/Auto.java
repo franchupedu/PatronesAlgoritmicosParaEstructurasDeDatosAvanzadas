@@ -1,6 +1,7 @@
 package vehiculos;
 
 import java.util.List;
+import java.util.Set;
 
 import dependencyInjection.Component;
 import dependencyInjection.Injected;
@@ -16,6 +17,9 @@ public class Auto implements Vehiculo{
 	 @Injected(count=4)
 	 private Rueda[] ruedas;
 
+	 @Injected(count=2)
+	 private Set<Rueda> otrasRuedas;
+	 
 	 @Injected(count=5,implementation=List.class)
 	 private List<Asiento> asientos;
 	 

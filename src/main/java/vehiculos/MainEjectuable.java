@@ -11,6 +11,6 @@ public class MainEjectuable {
         procesar(lista);*/
 	   
 	   Auto auto = Factory.getObject(Auto.class);
-	   auto.printProperties();
+	   //auto.printProperties();
     }
 }

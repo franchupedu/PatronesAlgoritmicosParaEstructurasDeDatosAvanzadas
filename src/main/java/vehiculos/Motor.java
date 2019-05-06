@@ -7,7 +7,7 @@ import dependencyInjection.Injected;
 
 @Component
 public class Motor {
-	 @Injected(count=25)
+	 @Injected(count=7)
 	 private List<Tuerca> tuercas;
 	 
 	 public void printProperties() {

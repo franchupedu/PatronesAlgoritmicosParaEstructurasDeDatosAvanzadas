@@ -6,7 +6,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Set;
@@ -47,26 +49,14 @@ public class Factory {
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
             		
-            		//LISTS	
-            		if ( fieldIsList(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
-            			System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
-            			List<Object> auxiliary = new LinkedList<Object>();
-            			List<Object> fieldValue = (List<Object>) auxiliary;
+            		//TODO los set son HashSet. Deberian poder ser LinkedHashSet o TreeSet? | Implement para lists
+            		if(fieldIsCollection(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
+            			System.out.println("--El campo '" + campo.getName() + "' es una Collection. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
+            			Collection<Object> fieldValue = getEmptyCollectionImplementation(campo);//
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
             				fieldValue.add(getObjectIfSingleton(fieldClass, campo));
             			}
-            			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject
-					}
-            		
-            		//SETS
-            		if ( fieldIsSet(campo) && injected.count() >= 1 ) {
-            			System.out.println("--El campo '" + campo.getName() + "' es un Set. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
-            			Set<Object> auxiliary = new HashSet<Object>();
-            			Set<Object> fieldValue = (Set<Object>) auxiliary;
-            			for(int i = 0; i < injected.count(); i++) {
-            				fieldValue.add(getObjectIfSingleton(fieldClass, campo));
-            			}
-            			setField(parentObject, campo, fieldValue);
+            			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject 
             		}
             		
             		//ARRAY
@@ -90,6 +80,13 @@ public class Factory {
         }
         
 		return parentObject;
+	}
+	
+	//Devuelve la implementacion correcta para el tipo de coleccion que sea el campo
+	//La idea de ponerlo aparte en otro method es para facilitar la extension con otras implementations 
+	//si hace falta(TreeSet, LinkedHashSet, otras implementations de Lists...)
+	private static Collection<Object> getEmptyCollectionImplementation(Field campo) {
+		return fieldIsSet(campo) ? (Set<Object>) new HashSet<Object>() : (List<Object>) new ArrayList<Object>();
 	}
 	
 	private static <T> T getObjectIfSingleton(Class<T> fieldClass, Field campo) {
