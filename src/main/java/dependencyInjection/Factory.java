@@ -8,9 +8,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.LinkedList;
 import java.util.Set;
 import java.util.HashSet;
 import java.lang.Class;
@@ -54,7 +52,7 @@ public class Factory {
             			System.out.println("--El campo '" + campo.getName() + "' es una Collection. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
             			Collection<Object> fieldValue = getEmptyCollectionImplementation(campo);//
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
-            				fieldValue.add(getObjectIfSingleton(fieldClass, campo));
+            				fieldValue.add(getObjectOrSingleton(fieldClass, campo));
             			}
             			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject 
             		}
@@ -64,14 +62,14 @@ public class Factory {
             			System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");           			
             			Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
             			for(int i = 0; i < injected.count(); i++) {
-            				fieldValue[i] = getObjectIfSingleton(fieldClass, campo);
+            				fieldValue[i] = getObjectOrSingleton(fieldClass, campo);
             			}           			
             			setField(parentObject, campo, fieldValue);
             		}
             		
             		//OTROS CASOS
             		else {
-	            		Object fieldValue = getObjectIfSingleton(fieldClass, campo);
+	            		Object fieldValue = getObjectOrSingleton(fieldClass, campo);
 	            		setField(parentObject, campo, fieldValue);//Le asigno al field del parentObject el fieldValue
 					}
             			      
@@ -89,7 +87,7 @@ public class Factory {
 		return fieldIsSet(campo) ? (Set<Object>) new HashSet<Object>() : (List<Object>) new ArrayList<Object>();
 	}
 	
-	private static <T> T getObjectIfSingleton(Class<T> fieldClass, Field campo) {
+	private static <T> T getObjectOrSingleton(Class<T> fieldClass, Field campo) {
 		Injected injected = campo.getAnnotation(Injected.class);
 		T object = null;
 		if ( injected.singleton() ) {
