@@ -1,5 +1,7 @@
 package vehiculos;
 
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -17,10 +19,10 @@ public class Auto implements Vehiculo{
 	 @Injected(count=4)
 	 private Rueda[] ruedas;
 
-	 @Injected(count=2)
+	 @Injected(count=2,implementation=LinkedHashSet.class)
 	 private Set<Rueda> otrasRuedas;
 	 
-	 @Injected(count=5,implementation=List.class)
+	 @Injected(count=5,implementation=LinkedList.class)
 	 private List<Asiento> asientos;
 	 
 	 private String queseyo = "jijr";

@@ -51,6 +51,7 @@ public class Factory {
             		if(fieldIsCollection(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
             			System.out.println("--El campo '" + campo.getName() + "' es una Collection. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
             			Collection<Object> fieldValue = getEmptyCollectionImplementation(campo);//
+            			//System.out.println(fieldValue.getClass());
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
             				fieldValue.add(getObjectOrSingleton(fieldClass, campo));
             			}
@@ -81,10 +82,20 @@ public class Factory {
 	}
 	
 	//Devuelve la implementacion correcta para el tipo de coleccion que sea el campo
-	//La idea de ponerlo aparte en otro method es para facilitar la extension con otras implementations 
-	//si hace falta(TreeSet, LinkedHashSet, otras implementations de Lists...)
+	@SuppressWarnings("unchecked")
 	private static Collection<Object> getEmptyCollectionImplementation(Field campo) {
-		return fieldIsSet(campo) ? (Set<Object>) new HashSet<Object>() : (List<Object>) new ArrayList<Object>();
+		Injected injected = campo.getAnnotation(Injected.class);  
+		Class<?> implementationAnnot = injected.implementation();//Class de @inyected(implement)
+		Class<?> implementationClass = null;//Class a usar, que implementa Collection
+		//Checkeo del tipo del field y de la class de @implement para ver si corresponde con una subclass de List o Set
+		if(fieldIsList(campo)) {
+			implementationClass = List.class.isAssignableFrom(implementationAnnot) ? implementationAnnot : ArrayList.class;  
+		}
+		else if(fieldIsSet(campo)) {
+			implementationClass = Set.class.isAssignableFrom(implementationAnnot) ? implementationAnnot : HashSet.class;  
+		}
+		//Si hay implementationClass se devuelve una instancia
+		return implementationClass != null ? (Collection<Object>) createObject(implementationClass) : null;
 	}
 	
 	private static <T> T getObjectOrSingleton(Class<T> fieldClass, Field campo) {
