@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 import java.lang.Class;
 
 import org.reflections.Reflections;
@@ -42,34 +43,34 @@ public class Factory {
             		throw new IllegalArgumentException("Una clase no puede inyectarse a si misma");
             	}
             	
-            	//TODO Singleton - Recursividad en Colecciones
             	//La clase tiene @Component?
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
-            		        
-            		//LISTS	
-            		if ( fieldIsList(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
-            			System.out.println("--El campo '" + campo.getName() + "' es una Lista. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
-            			List<Object> fieldValue = new ArrayList<Object>();
+            		
+            		//TODO los set son HashSet. Deberian poder ser LinkedHashSet o TreeSet? | Implement para lists
+            		if(fieldIsCollection(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
+            			System.out.println("--El campo '" + campo.getName() + "' es una Collection. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
+            			Collection<Object> fieldValue = getEmptyCollectionImplementation(campo);//
+            			//System.out.println(fieldValue.getClass());
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
-            				fieldValue.add(getObject(fieldClass));
+            				fieldValue.add(getObjectOrSingleton(fieldClass, campo));
             			}
-            			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject
-					}
+            			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject 
+            		}
             		
             		//ARRAY
             		else if(campo.getType().isArray()) {
             			System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");           			
             			Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
             			for(int i = 0; i < injected.count(); i++) {
-            				fieldValue[i] = getObject(fieldClass);
+            				fieldValue[i] = getObjectOrSingleton(fieldClass, campo);
             			}           			
             			setField(parentObject, campo, fieldValue);
             		}
             		
             		//OTROS CASOS
             		else {
-	            		Object fieldValue = getObject(fieldClass);
+	            		Object fieldValue = getObjectOrSingleton(fieldClass, campo);
 	            		setField(parentObject, campo, fieldValue);//Le asigno al field del parentObject el fieldValue
 					}
             			      
@@ -79,9 +80,42 @@ public class Factory {
         
 		return parentObject;
 	}
-
+	
+	//Devuelve la implementacion correcta para el tipo de coleccion que sea el campo
+	@SuppressWarnings("unchecked")
+	private static Collection<Object> getEmptyCollectionImplementation(Field campo) {
+		Injected injected = campo.getAnnotation(Injected.class);  
+		Class<?> implementationAnnot = injected.implementation();//Class de @inyected(implement)
+		Class<?> implementationClass = null;//Class a usar, que implementa Collection
+		//Checkeo del tipo del field y de la class de @implement para ver si corresponde con una subclass de List o Set
+		if(fieldIsList(campo)) {
+			implementationClass = List.class.isAssignableFrom(implementationAnnot) ? implementationAnnot : ArrayList.class;  
+		}
+		else if(fieldIsSet(campo)) {
+			implementationClass = Set.class.isAssignableFrom(implementationAnnot) ? implementationAnnot : HashSet.class;  
+		}
+		//Si hay implementationClass se devuelve una instancia
+		return implementationClass != null ? (Collection<Object>) createObject(implementationClass) : null;
+	}
+	
+	private static <T> T getObjectOrSingleton(Class<T> fieldClass, Field campo) {
+		Injected injected = campo.getAnnotation(Injected.class);
+		T object = null;
+		if ( injected.singleton() ) {
+			object = (T) Singleton.getObjectOfClass(fieldClass);
+			if ( object == null ) {
+				object = getObject(fieldClass);
+				Singleton.getSingletonInstances().add(object);
+			}
+		}
+		else {
+			object = getObject(fieldClass);
+		}
+		return object;
+	}
+	
 	//Devuelve la clase a implementar en un campo con interface
-	public static Class<?> getInterfaceImplementationClass(Class<?> interfaceClass, Injected injected){
+	private static Class<?> getInterfaceImplementationClass(Class<?> interfaceClass, Injected injected){
 		Reflections reflections = new Reflections(interfaceClass.getPackage().getName());
 		Set<?> implementations = reflections.getSubTypesOf(interfaceClass);//Todas las clases que implementan la interface
 		//System.out.println("---Implementaciones de la interface '" + interfaceClass.getSimpleName() + "': " + implementations );
@@ -102,10 +136,10 @@ public class Factory {
 	}
 	
 	//Devuelve la clase de un campo. Si es coleccion, devuelve la clase parametrizada
-	public static Class<?> getFieldClass(Field campo){
+	private static Class<?> getFieldClass(Field campo){
 		Class<?> fieldClass = campo.getType();
     	Class<?> finalClass = null;
-    	if(fieldIsList(campo)) {
+    	if(fieldIsCollection(campo)) {
     		finalClass = getListFieldParametizedClass(campo);
     	}
     	else if (fieldClass.isArray()) {
@@ -121,7 +155,7 @@ public class Factory {
 	}
 	
 	//Devuelve la clase parametrizada en un List 
-	public static Class<?> getListFieldParametizedClass(Field campo) {
+	private static Class<?> getListFieldParametizedClass(Field campo) {
         Type type = campo.getGenericType();
         if (type instanceof ParameterizedType) {
             ParameterizedType paramType = (ParameterizedType) type;
@@ -134,7 +168,7 @@ public class Factory {
 	}
 	
 	//Setea el campo del objecto con el valor enviado
-	public static <T> void setField(T object, Field campo, Object value) {
+	private static <T> void setField(T object, Field campo, Object value) {
 		campo.setAccessible(true);//Para setear campos con private
 		//Seteo el campo del parentObject con el objeto devuelto por el factory
 		try {
@@ -150,7 +184,7 @@ public class Factory {
 	}
 	
 	//Devuelve instancia de la clase objectClass
-	public static <T> T createObject(Class<T> objectClass) {
+	private static <T> T createObject(Class<T> objectClass) {
 		T object = null;
 		Constructor<T> constructor = null;
 		//Guardo el constructor
@@ -185,7 +219,7 @@ public class Factory {
 	
 	//Si la clase tiene el annotation 'Component' devuelvo true
 	//Solo se inyectan las clases que tengan @Component
-	public static <T> boolean isComponent(Class<T> classToCheck) {
+	private static <T> boolean isComponent(Class<T> classToCheck) {
 		return classToCheck.getAnnotation(Component.class) != null;
 	}
 
@@ -221,7 +255,16 @@ public class Factory {
         }		
 	}
 	
-	public static boolean fieldIsList(Field campo) {
+	private static boolean fieldIsCollection(Field campo) {
 		return Collection.class.isAssignableFrom(campo.getType());
 	}
+	
+	private static boolean fieldIsList(Field campo) {
+		return List.class.isAssignableFrom(campo.getType());
+	}
+	
+	private static boolean fieldIsSet(Field campo) {
+		return Set.class.isAssignableFrom(campo.getType());
+	}
+	
 }

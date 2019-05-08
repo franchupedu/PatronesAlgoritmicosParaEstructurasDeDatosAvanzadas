@@ -1,6 +1,9 @@
 package vehiculos;
 
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import dependencyInjection.Component;
 import dependencyInjection.Injected;
@@ -16,7 +19,10 @@ public class Auto implements Vehiculo{
 	 @Injected(count=4)
 	 private Rueda[] ruedas;
 
-	 @Injected(count=5,implementation=List.class)
+	 @Injected(count=2,implementation=LinkedHashSet.class)
+	 private Set<Rueda> otrasRuedas;
+	 
+	 @Injected(count=5,implementation=LinkedList.class)
 	 private List<Asiento> asientos;
 	 
 	 private String queseyo = "jijr";
@@ -26,6 +32,10 @@ public class Auto implements Vehiculo{
 	 public void printProperties() {
 		 System.out.println(getMotor());
 		 getMotor().printProperties();
+		 System.out.println(getRuedas());
+		 System.out.println(getTieneQueSerNulo());
+		 System.out.println(getQueseyo());
+		 System.out.println(getAsientos());
 	 }
 
 	public Motor getMotor() {
