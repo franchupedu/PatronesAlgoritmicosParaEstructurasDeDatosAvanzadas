@@ -11,6 +11,16 @@ public class Motor {
 	 private List<Tuerca> tuercas;
 	 
 	 public void printProperties() {
-		 System.out.println(tuercas);
-	 }	 
+		 System.out.println(getTuercas());
+	 }
+
+	public List<Tuerca> getTuercas() {
+		return tuercas;
+	}
+
+	public void setTuercas(List<Tuerca> tuercas) {
+		this.tuercas = tuercas;
+	}	 
+	 
+	 
 }
