@@ -1,6 +1,6 @@
 package dependencyInjection;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -17,8 +17,8 @@ public class FactoryCamionTest {
 	}
 
 	@Test
-	public void elCamionNoDebeSerInstanciadoPorqueNoEsComponent() {
-		assertNull(camion);
+	public void elCamionDebeSerInstanciadoAunqueNoEsComponent() {
+		assertNotNull(camion);
 	}
 
 }

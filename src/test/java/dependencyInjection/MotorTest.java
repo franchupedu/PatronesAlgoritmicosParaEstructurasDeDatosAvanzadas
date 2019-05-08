@@ -27,8 +27,9 @@ public class MotorTest {
 		assertNotNull(motor.getTuercas());
 	}
 	
-	public void motorTiene25Tuercas() {
-		assertEquals(25, motor.getTuercas());
+	@Test
+	public void motorTiene3Tuercas() {
+		assertEquals(3, motor.getTuercas().size());
 	}
 
 }

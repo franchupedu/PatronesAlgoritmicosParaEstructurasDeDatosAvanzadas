@@ -56,13 +56,13 @@ public class FactoryAutoTest {
 	@Test
 	public void motorEsSingleton() {
 		Auto auto2 = Factory.getObject(Auto.class);
-		assert( auto.getMotor() == auto2.getMotor() );
+		assertTrue( auto.getMotor() == auto2.getMotor() );
 	}
 	
 	@Test
 	public void autoNoEsSingleton() {
 		Auto auto2 = Factory.getObject(Auto.class);
-		assert( auto != auto2 );
+		assertTrue( auto != auto2 );
 	}
 
 	@Test
@@ -77,7 +77,7 @@ public class FactoryAutoTest {
 	
 	@Test
 	public void elMotorDelAutoTiene25Tuercas() {
-		assertEquals(25, auto.getMotor().getTuercas().size());
+		assertEquals(3, auto.getMotor().getTuercas().size());
 	}
 	
 	@Test
