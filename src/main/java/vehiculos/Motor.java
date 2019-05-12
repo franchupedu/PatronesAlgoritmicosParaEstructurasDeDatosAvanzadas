@@ -5,7 +5,7 @@ import java.util.List;
 import dependencyInjection.Component;
 import dependencyInjection.Injected;
 
-@Component
+@Component(singleton = true)
 public class Motor {
 	 @Injected(count=3)
 	 private List<Tuerca> tuercas;
