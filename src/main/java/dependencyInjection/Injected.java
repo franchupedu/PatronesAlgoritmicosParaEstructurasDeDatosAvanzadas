@@ -9,6 +9,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Injected {
 	int count() default 1;
-	boolean singleton() default false;
-	Class<?> implementation() default Class.class; //TODO 
+	Class<?> implementation() default Class.class;
 }

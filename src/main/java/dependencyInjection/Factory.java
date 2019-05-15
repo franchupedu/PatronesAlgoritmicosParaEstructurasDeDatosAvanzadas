@@ -19,8 +19,21 @@ import org.reflections.Reflections;
 public class Factory {
 	
 	public static <T> T getObject(Class<T> objectClass) {
+		
 		System.out.println("Instanciando un objeto de Type '" + objectClass.getSimpleName() + "'");
-		T object = createObject(objectClass);//Guardo una instancia de objectClass
+		T object = createObject(objectClass);
+		Component component = objectClass.getAnnotation(Component.class);
+		if (component != null) {
+			if (component.singleton()) {
+				object = (T) Singleton.getObjectOfClass(objectClass);
+				if ( object != null ) {
+					return object;					
+				}
+				object = createObject(objectClass);
+				Singleton.getSingletonInstances().add(object);
+			}
+		}
+		//Guardo una instancia de objectClass
 		System.out.println("-Inyectando dependencias");
 		object = inyectDependencies(object);//Inyectamos dependencias a la instancia
 		System.out.println("---Objeto '" + objectClass.getSimpleName() + "' instanciado con exito!");
@@ -53,7 +66,7 @@ public class Factory {
             			Collection<Object> fieldValue = getEmptyCollectionImplementation(campo);//
             			//System.out.println(fieldValue.getClass());
             			for(int i = 0; i < injected.count(); i++) {//Injecto un objeto en el list segun el count
-            				fieldValue.add(getObjectOrSingleton(fieldClass, campo));
+            				fieldValue.add(getObject(fieldClass));
             			}
             			setField(parentObject, campo, fieldValue);//Le asigno el valor de la lista al campo del parentObject 
             		}
@@ -63,14 +76,14 @@ public class Factory {
             			System.out.println("--El campo '" + campo.getName() + "' es un Array. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");           			
             			Object[] fieldValue = (Object[]) Array.newInstance(fieldClass, injected.count());
             			for(int i = 0; i < injected.count(); i++) {
-            				fieldValue[i] = getObjectOrSingleton(fieldClass, campo);
+            				fieldValue[i] = getObject(fieldClass);
             			}           			
             			setField(parentObject, campo, fieldValue);
             		}
             		
             		//OTROS CASOS
             		else {
-	            		Object fieldValue = getObjectOrSingleton(fieldClass, campo);
+	            		Object fieldValue = getObject(fieldClass);
 	            		setField(parentObject, campo, fieldValue);//Le asigno al field del parentObject el fieldValue
 					}
             			      
@@ -97,7 +110,7 @@ public class Factory {
 		//Si hay implementationClass se devuelve una instancia
 		return implementationClass != null ? (Collection<Object>) createObject(implementationClass) : null;
 	}
-	
+	/*
 	private static <T> T getObjectOrSingleton(Class<T> fieldClass, Field campo) {
 		Injected injected = campo.getAnnotation(Injected.class);
 		T object = null;
@@ -113,7 +126,7 @@ public class Factory {
 		}
 		return object;
 	}
-	
+	*/
 	//Devuelve la clase a implementar en un campo con interface
 	private static Class<?> getInterfaceImplementationClass(Class<?> interfaceClass, Injected injected){
 		Reflections reflections = new Reflections(interfaceClass.getPackage().getName());

@@ -12,8 +12,8 @@ import dependencyInjection.Injected;
 public class Auto implements Vehiculo{
 	 @Injected(implementation=Moto.class)
 	 private Vehiculo pruebaDeInterfaz;
-	
-	 @Injected(singleton=true)
+	 
+	 @Injected
 	 private Motor motor;
 	 
 	 @Injected(count=4)

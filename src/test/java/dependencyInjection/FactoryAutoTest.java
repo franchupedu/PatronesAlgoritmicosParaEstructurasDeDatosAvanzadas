@@ -20,6 +20,7 @@ public class FactoryAutoTest {
 	
 	@Before
 	public void init() {
+		Singleton.singletonInstances.clear();
 		auto = Factory.getObject(Auto.class);
 	}
 	
