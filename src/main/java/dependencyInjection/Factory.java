@@ -136,9 +136,8 @@ public class Factory {
 		//System.out.println("---Implementaciones de la interface '" + interfaceClass.getSimpleName() + "': " + implementations );
 		//Si existe solo una implementacion, o mas de una pero no se paso las que se quiere por inyected, usamos la primera
 		
-		if(implementations.size() <= 0) {
+		if(implementations.size() <= 0)
 			throw new IllegalArgumentException("No se encontro ninguna implementacion para '" + interfaceClass.getCanonicalName() + "'.");
-		}
 		else if(implementations.size() == 1 || (implementations.size() > 1 && inyectedImplementation == Class.class))
 			implementationClass = (Class<?>) implementations.iterator().next();//Primer item en el set
 		//Si existen varias implementaciones
