@@ -135,7 +135,11 @@ public class Factory {
 		Class<?> implementationClass = null;//Implementacion a usar. Clase que se va a instanciar en el campo
 		//System.out.println("---Implementaciones de la interface '" + interfaceClass.getSimpleName() + "': " + implementations );
 		//Si existe solo una implementacion, o mas de una pero no se paso las que se quiere por inyected, usamos la primera
-		if(implementations.size() == 1 || (implementations.size() > 1 && inyectedImplementation == Class.class))
+		
+		if(implementations.size() <= 0) {
+			throw new IllegalArgumentException("No se encontro ninguna implementacion para '" + interfaceClass.getCanonicalName() + "'.");
+		}
+		else if(implementations.size() == 1 || (implementations.size() > 1 && inyectedImplementation == Class.class))
 			implementationClass = (Class<?>) implementations.iterator().next();//Primer item en el set
 		//Si existen varias implementaciones
 		else if( implementations.size() > 1 ) {
@@ -144,11 +148,11 @@ public class Factory {
 				if(implementations.contains(inyectedImplementation)) 
 					implementationClass = inyectedImplementation;
 				else //La que se paso no es subtipo
-					throw new IllegalArgumentException("La clase a implementar no es una implementacion '" + interfaceClass.getCanonicalName() + "'");
+					throw new IllegalArgumentException("La clase a implementar no es una implementacion '" + interfaceClass.getCanonicalName() + "'.");
 			}
 			//Varias implementaciones pero no se especifico cual
 			else{
-				throw new IllegalArgumentException("Se debe especificar la implementación de '" + interfaceClass.getCanonicalName() + "'a utilizar");
+				throw new IllegalArgumentException("Se debe especificar la implementación de '" + interfaceClass.getCanonicalName() + "'a utilizar.");
 			}
 		}
 		//System.out.println("---La clase a implementar es '" + implementationClass.getSimpleName() + "'");
