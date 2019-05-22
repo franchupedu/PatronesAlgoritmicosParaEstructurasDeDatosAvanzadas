@@ -30,8 +30,9 @@ public class Auto implements Vehiculo{
 	 private Boolean tieneQueSerNulo;
 	 
 	 public void printProperties() {
+		 System.out.println(getPruebaDeInterfaz());
 		 System.out.println(getMotor());
-		 getMotor().printProperties();
+		 //getMotor().printProperties();
 		 System.out.println(getRuedas());
 		 System.out.println(getTieneQueSerNulo());
 		 System.out.println(getQueseyo());

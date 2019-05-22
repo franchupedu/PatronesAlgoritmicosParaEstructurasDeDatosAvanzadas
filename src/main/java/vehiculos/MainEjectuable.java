@@ -1,6 +1,6 @@
 package vehiculos;
 
-//import dependencyInjection.Factory;
+import dependencyInjection.Factory;
 
 public class MainEjectuable {
 	
@@ -10,7 +10,7 @@ public class MainEjectuable {
         lista.add(new Libro("titulo1", "pedro"));
         procesar(lista);*/
 	   
-	   //Auto auto = Factory.getObject(Auto.class);
-	   //auto.printProperties();
+	   Auto auto = Factory.getObject(Auto.class);
+	   auto.printProperties();
     }
 }

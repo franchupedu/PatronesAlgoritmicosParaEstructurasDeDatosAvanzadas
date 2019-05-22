@@ -60,7 +60,7 @@ public class Factory {
             	if(isComponent(fieldClass)) {
             		System.out.println("--Inyectando el campo '" + campo.getName() + "'");
             		
-            		//TODO los set son HashSet. Deberian poder ser LinkedHashSet o TreeSet? | Implement para lists
+            		//COLLECTION
             		if(fieldIsCollection(campo) && injected.count() >= 1 ) {//Si tiene count >= 1 y es una coleccion
             			System.out.println("--El campo '" + campo.getName() + "' es una Collection. Se van a instanciar " + injected.count() + " elementos del tipo '" + fieldClass.getSimpleName() + "'");
             			Collection<Object> fieldValue = getEmptyCollectionImplementation(campo);//
@@ -131,20 +131,27 @@ public class Factory {
 	private static Class<?> getInterfaceImplementationClass(Class<?> interfaceClass, Injected injected){
 		Reflections reflections = new Reflections(interfaceClass.getPackage().getName());
 		Set<?> implementations = reflections.getSubTypesOf(interfaceClass);//Todas las clases que implementan la interface
-		//System.out.println("---Implementaciones de la interface '" + interfaceClass.getSimpleName() + "': " + implementations );
-		
+		Class<?> inyectedImplementation = injected.implementation();//La clase que se quiere implementar pasada por @inyected
 		Class<?> implementationClass = null;//Implementacion a usar. Clase que se va a instanciar en el campo
-		//TODO tirar warning si se manda implementation que no existe (exception si existe mas de una)
-		//Si existe solo una implementacion usamos esa
-		if(implementations.size() == 1)
+		//System.out.println("---Implementaciones de la interface '" + interfaceClass.getSimpleName() + "': " + implementations );
+		//Si existe solo una implementacion, o mas de una pero no se paso las que se quiere por inyected, usamos la primera
+		if(implementations.size() == 1 || (implementations.size() > 1 && inyectedImplementation == Class.class))
 			implementationClass = (Class<?>) implementations.iterator().next();//Primer item en el set
-		//Si existen varias implementaciones, y se paso alguna clase por injected, usamos esa
-		else if( implementations.size() > 1 && injected.implementation() != Class.class ) {
-			if(implementations.contains(injected.implementation())) 
-				implementationClass = injected.implementation();
-		}		
+		//Si existen varias implementaciones
+		else if( implementations.size() > 1 ) {
+			//Se paso la que se quiere por inyected
+			if(inyectedImplementation != Class.class) {
+				if(implementations.contains(inyectedImplementation)) 
+					implementationClass = inyectedImplementation;
+				else //La que se paso no es subtipo
+					throw new IllegalArgumentException("La clase a implementar no es una implementacion '" + interfaceClass.getCanonicalName() + "'");
+			}
+			//Varias implementaciones pero no se especifico cual
+			else{
+				throw new IllegalArgumentException("Se debe especificar la implementación de '" + interfaceClass.getCanonicalName() + "'a utilizar");
+			}
+		}
 		//System.out.println("---La clase a implementar es '" + implementationClass.getSimpleName() + "'");
-		
     	return implementationClass;
 	}
 	
